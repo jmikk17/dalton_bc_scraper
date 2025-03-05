@@ -47,7 +47,7 @@ def extract_1st_order_prop(content: str) -> list:
         content (str): Content of the Dalton output file
 
     Returns:
-        dict: Dict of atom index and charge value
+        list: MBIS charges
 
     """
     mbis_pattern = r"MBIS converged!.*?Final converged results\s+Qatom(.*?)(?:\n\s*\n|\Z)"
@@ -60,7 +60,6 @@ def extract_1st_order_prop(content: str) -> list:
         charge_list.extend(
             [float(charge_match.group(2)) for charge_match in re.finditer(charge_pattern, charge_section)],
         )
-
     return charge_list
 
 
