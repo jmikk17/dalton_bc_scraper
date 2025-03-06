@@ -100,6 +100,12 @@ def extract_other_info(content: str) -> dict:
     if basis_match:
         result["basis"] = basis_match.group(1).strip()
     else:
+        atombasis_mathch = re.search(r"ATOMBASIS", content)
+        if atombasis_mathch:
+            basis_set_match = re.search(r"Basis set:\s*([A-Za-z0-9-]+)", content)
+            if basis_set_match:
+                result["basis"] = basis_set_match.group(1).strip()
+    if not result.get("basis"):
         sys.exit("Error: No basis set found")
     charge_match = re.search(r"@\s*Total charge of the molecule\s+(-?\d+)", content)
     if charge_match:
