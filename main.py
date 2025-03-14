@@ -7,7 +7,7 @@ import alpha
 import auxil
 import parse_calculation
 import parse_coords
-import properties
+import parse_properties
 
 
 def parse_dalton_output(content: str) -> None | dict:
@@ -27,12 +27,20 @@ def parse_dalton_output(content: str) -> None | dict:
     coord_dict = parse_coords.extract_coordinates(content)
     if not coord_dict:
         sys.exit("Error: No coordinates found")
-    charge_list = properties.extract_1st_order_prop(content)
+    charge_list = parse_properties.extract_1st_order_prop(content)
     if not charge_list:
         warnings.warn("No charges found", stacklevel=2)
-    main_dict.update({"atoms": parse_coords.combine_coords_with_charges(coord_dict, charge_list)})
+        main_dict.update({"atoms": coord_dict})
+    else:
+        main_dict.update({"atoms": parse_coords.combine_coords_with_charges(coord_dict, charge_list)})
 
-    property_dict = {"properties": properties.extract_2nd_order_prop(content, main_dict["wave_function"])}
+    property_dict = {
+        "2nd_order_properties": parse_properties.extract_2nd_order_prop(
+            content,
+            main_dict["wave_function"],
+            main_dict["atomic_moment_order"],
+        ),
+    }
     if not property_dict:
         sys.exit("Error: No second order properties found")
     main_dict.update(property_dict)
@@ -50,7 +58,7 @@ def alpha_analysis(content: dict) -> dict:
         dict: Dictionary containing alpha contributions
 
     """
-    property_df = properties.read_2nd_order_prop(content)
+    property_df = parse_properties.read_2nd_order_prop(content)
 
     geometry = parse_coords.read_coords(content)
     atmmom = content["atomic_moment_order"]

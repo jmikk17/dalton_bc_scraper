@@ -32,14 +32,14 @@ def extract_coordinates(content: str) -> list[dict[str, float]]:
         r"([A-Za-z0-9]+)\s*:\s*(\d+)\s*x\s*([-+]?\d*\.\d+)\s*(\d+)\s*y\s*([-+]?\d*\.\d+)\s*(\d+)\s*z\s*([-+]?\d*\.\d+)"
     )
 
-    for match in re.finditer(coord_pattern, coord_text):
+    for i, match in enumerate(re.finditer(coord_pattern, coord_text)):
         atom_label_with_number = match.group(1)
         atom_label = re.match(r"([A-Za-z]+)", atom_label_with_number).group(1)
         x = float(match.group(3))
         y = float(match.group(5))
         z = float(match.group(7))
 
-        coords.append({"atom": atom_label, "x": x, "y": y, "z": z})
+        coords.append({"label": atom_label, "index": i + 1, "x": x, "y": y, "z": z})
 
     return coords
 

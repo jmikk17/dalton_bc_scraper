@@ -107,11 +107,11 @@ def format_alpha_result(
 
     """
     if atmmom == 0:
-        return {"alpha_00": (-alpha_00).tolist()}
+        return {"polari_00": (-alpha_00).tolist()}
     return {
-        "alpha_00": (-alpha_00).tolist(),
-        "alpha_0b": (-alpha_0b).tolist(),
-        "alpha_a0": (-alpha_a0).tolist(),
-        "alpha_ab": (-alpha_ab).tolist(),
-        "alpha_tot": (-(alpha_00 + alpha_0b + alpha_a0 + alpha_ab)).tolist(),
+        "polari_00": (-alpha_00).tolist(),
+        "polari_0b": (-alpha_0b).tolist(),
+        "polari_a0": (-alpha_a0).tolist(),
+        "polari_ab": (-alpha_ab).tolist(),
+        "polari_tot": (-(alpha_00 + alpha_0b + alpha_a0 + alpha_ab)).tolist(),
     }
