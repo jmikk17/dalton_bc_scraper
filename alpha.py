@@ -120,5 +120,5 @@ def format_alpha_result(
             "alpha_ab": (-alpha_ab).tolist(),
             "ab_iso_fraction": np.round(np.trace(-alpha_ab) / np.trace(-alpha_tot), decimals=3),
             "alpha_tot": (-(alpha_tot)).tolist(),
-        }
+        },
     }

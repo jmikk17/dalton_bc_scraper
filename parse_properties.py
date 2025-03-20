@@ -11,18 +11,16 @@ def extract_2nd_order_prop(content: str, wave_function: str, atomic_moment_order
     Args:
         content (str): Content of the Dalton output file
         wave_function (str): The type of wave function used in the calculation, used for regex pattern selection
+        atomic_moment_order (int): The atomic moment order of the calculation
 
     Returns:
         dict: Dictionary of the format {label: value} for each property
 
     """
     properties_00 = {}
-    if atomic_moment_order > 0:
-        properties_0b = {}
-        properties_ab = {}
-        if wave_function == "CC":
-            # All of a0 is part of the triangle not printed for non CC wave functions
-            properties_a0 = {}
+    properties_0b = {}
+    properties_ab = {}
+    properties_a0 = {}
 
     if wave_function == "CC":
         pattern = (
@@ -54,10 +52,9 @@ def extract_2nd_order_prop(content: str, wave_function: str, atomic_moment_order
 
     if atomic_moment_order == 0:
         return {"00": properties_00}
-    elif wave_function == "CC":
+    if wave_function == "CC":
         return {"00": properties_00, "0b": properties_0b, "a0": properties_a0, "ab": properties_ab}
-    else:
-        return {"00": properties_00, "0b": properties_0b, "ab": properties_ab}
+    return {"00": properties_00, "0b": properties_0b, "ab": properties_ab}
 
 
 def extract_1st_order_prop(content: str) -> list:
