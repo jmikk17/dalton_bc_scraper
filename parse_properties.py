@@ -1,8 +1,17 @@
 import re
 
+import numpy as np
 import pandas as pd
 
 import auxil
+
+# C6 xyz labels following the Orient format
+C6_XYZ = {
+    "00": 0,  # 00
+    "0z": 1,  # 10
+    "0x": 2,  # 11c
+    "0y": 3,  # 11s
+}
 
 
 def extract_2nd_order_prop(content: str, wave_function: str, atomic_moment_order: int) -> dict:
@@ -144,3 +153,64 @@ def read_2nd_order_prop(content: dict) -> pd.DataFrame:
                 )
 
     return pd.DataFrame(parsed_data)
+
+
+def extract_c6(content: str) -> dict:
+    """Extract C6 coefficients from the Dalton output.
+
+    Args:
+        content (str): Content of the Dalton output file
+        n_freq (int): Number of frequencies to extract
+
+    Returns:
+        dict: Dictionary of alpha(iomega) values
+
+    Todo:
+        - Logic for parsing needs to be double checked.
+
+    """
+    results = {}
+
+    c6_pattern = r"(AM\w+)\s+(AM\w+)\s+([-]?\d+\.\d+)\n\s+GRIDSQ\s+ALPHA\n((?:\s+[-]?\d+\.\d+\s+[-]?\d+\.\d+\n){11})"
+
+    for match in re.finditer(c6_pattern, content):
+        operator1 = match.group(1)
+        operator2 = match.group(2)
+
+        data_block = match.group(4)
+
+        index1, _, xyz_comp1 = auxil.get_label(operator1)
+        index2, _, xyz_comp2 = auxil.get_label(operator2)
+
+        key1 = f"{index1}_{index2}"
+        key2 = f"{index2}_{index1}"
+        reverse = False
+        if key1 in results:
+            key = key1
+        elif key2 in results:
+            key = key2
+            reverse = True
+        else:
+            key = key1
+            results[key1] = {}
+
+        xyz_idx1 = C6_XYZ.get(xyz_comp1, 0)
+        xyz_idx2 = C6_XYZ.get(xyz_comp2, 0)
+
+        data_lines = data_block.strip().split("\n")
+        for line in data_lines:
+            parts = line.strip().split()
+            if len(parts) >= 2:
+                gridsq = -float(parts[0])
+                alpha = float(parts[1])
+
+                if str(gridsq) not in results[key]:
+                    results[key][str(gridsq)] = np.zeros((4, 4))
+                if reverse:
+                    results[key][str(gridsq)][xyz_idx2, xyz_idx1] = alpha
+                else:
+                    results[key][str(gridsq)][xyz_idx1, xyz_idx2] = alpha
+                if index1 == index2:
+                    results[key][str(gridsq)][xyz_idx2, xyz_idx1] = alpha
+
+    return results

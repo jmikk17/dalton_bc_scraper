@@ -111,14 +111,14 @@ def format_alpha_result(
         return {"polarizability": {"alpha_00": (-alpha_00).tolist()}}
     return {
         "polarizability": {
-            "alpha_00": (-alpha_00).tolist(),
+            "alpha_00": (-alpha_00),
             "00_iso_fraction": np.round(np.trace(-alpha_00) / np.trace(-alpha_tot), decimals=3),
-            "alpha_0b": (-alpha_0b).tolist(),
+            "alpha_0b": (-alpha_0b),
             "0b_iso_fraction": np.round(np.trace(-alpha_0b) / np.trace(-alpha_tot), decimals=3),
-            "alpha_a0": (-alpha_a0).tolist(),
+            "alpha_a0": (-alpha_a0),
             "a0_iso_fraction": np.round(np.trace(-alpha_a0) / np.trace(-alpha_tot), decimals=3),
-            "alpha_ab": (-alpha_ab).tolist(),
+            "alpha_ab": (-alpha_ab),
             "ab_iso_fraction": np.round(np.trace(-alpha_ab) / np.trace(-alpha_tot), decimals=3),
-            "alpha_tot": (-(alpha_tot)).tolist(),
+            "alpha_tot": (-(alpha_tot)),
         },
     }

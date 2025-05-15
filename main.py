@@ -70,6 +70,22 @@ def alpha_analysis(content: dict) -> dict:
     return alpha.alpha_calc(property_df, geometry, atmmom)
 
 
+def parse_c6_data(content: str) -> dict:
+    """Extract C6 data from Dalton output file.
+
+    Args:
+        content (str): Content of Dalton output file
+
+    """
+    c6_dict = parse_properties.extract_c6(content)
+    if not c6_dict:
+        sys.exit("Error: No C6 data found")
+
+    labels = parse_coords.extract_coordinates(content, c6_label=True)
+
+    auxil.write_c6(c6_dict, labels)
+
+
 def main() -> None:
     """Select between parsing and alpha analysis and write the output to a JSON file.
 
@@ -78,12 +94,12 @@ def main() -> None:
     """
     args = auxil.setup_parser()
 
-    if not (args.parse or args.alpha or args.all):
+    if not (args.parse or args.alpha or args.c6 or args.all):
         args.all = True
 
     input_file, output_file = auxil.get_file_names(args)
 
-    if not args.alpha:
+    if args.parse or args.all:
         content = auxil.read_file(input_file, ".out")
         result = parse_dalton_output(content)
         if args.all:
@@ -91,8 +107,12 @@ def main() -> None:
     elif args.alpha:
         content = auxil.read_file(input_file, ".json")
         result = alpha_analysis(content)
+    elif args.c6:
+        content = auxil.read_file(input_file, ".out")
+        result = parse_c6_data(content)
 
-    auxil.write_file(output_file, result)
+    if not args.c6:
+        auxil.write_file(output_file, result)
 
 
 if __name__ == "__main__":
