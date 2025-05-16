@@ -1,3 +1,4 @@
 *.pyc
 c6_*.out
 c6_*.txt
+*.json

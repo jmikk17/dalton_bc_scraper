@@ -182,6 +182,8 @@ def extract_c6(content: str) -> dict:
         index1, _, xyz_comp1 = auxil.get_label(operator1)
         index2, _, xyz_comp2 = auxil.get_label(operator2)
 
+        # We only have half the values, but in the new format they are not necessarily triangle of a mat
+        # So we need to collect 1_2 and 2_1 terms in same mat
         key1 = f"{index1}_{index2}"
         key2 = f"{index2}_{index1}"
         reverse = False
@@ -200,7 +202,7 @@ def extract_c6(content: str) -> dict:
         data_lines = data_block.strip().split("\n")
         for line in data_lines:
             parts = line.strip().split()
-            if len(parts) >= 2:
+            if len(parts) >= 2:  # Ensure the line contains GRIDSQ and ALPHA values
                 gridsq = -float(parts[0])
                 alpha = float(parts[1])
 
@@ -210,7 +212,7 @@ def extract_c6(content: str) -> dict:
                     results[key][str(gridsq)][xyz_idx2, xyz_idx1] = alpha
                 else:
                     results[key][str(gridsq)][xyz_idx1, xyz_idx2] = alpha
-                if index1 == index2:
+                if index1 == index2 and xyz_comp1 != xyz_comp2:
                     results[key][str(gridsq)][xyz_idx2, xyz_idx1] = alpha
 
     return results

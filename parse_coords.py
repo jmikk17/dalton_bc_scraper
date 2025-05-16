@@ -2,7 +2,7 @@ import re
 import sys
 
 
-def extract_coordinates(content: str, *, c6_label: bool = False) -> list[dict[str, float]]:
+def extract_coordinates(content: str, *, label_only: bool = False) -> list[dict[str, float]]:
     """Extract Cartesian coordinates from Dalton output.
 
     For larger molecules, this approach requires that the condition in subroutine pricar.F is commented out,
@@ -10,6 +10,7 @@ def extract_coordinates(content: str, *, c6_label: bool = False) -> list[dict[st
 
     Args:
         content (str): The content of the Dalton output file
+        label_only (bool): If True, only the atom labels including index are returned. Default is False.
 
     Returns:
         list: List of dictionaries containing atom labels and coordinates
@@ -39,7 +40,7 @@ def extract_coordinates(content: str, *, c6_label: bool = False) -> list[dict[st
         y = float(match.group(5))
         z = float(match.group(7))
 
-        if c6_label:
+        if label_only:
             coords.append(atom_label_with_number)
         else:
             coords.append({"label": atom_label, "index": i + 1, "x": x, "y": y, "z": z})

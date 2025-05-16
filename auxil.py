@@ -152,8 +152,9 @@ def write_c6(c6_dict: dict, labels: list, output_file: str = "c6_tmp.txt") -> No
         output_file (str): Output file path
 
     """
+    # To match Orient format, we need to have sorted frequencies as outer layer
     all_frequencies = set()
-    for key, freq_data in c6_dict.items():
+    for freq_data in c6_dict.values():
         all_frequencies.update([float(f) for f in freq_data])
 
     sorted_frequencies = sorted(all_frequencies, reverse=True)
@@ -174,7 +175,7 @@ def write_c6(c6_dict: dict, labels: list, output_file: str = "c6_tmp.txt") -> No
                     found = True
                 else:
                     for f in freq_data:
-                        if abs(float(f) - freq) < 1e-10:
+                        if abs(float(f) - freq) < 1e-10:  # Allow for floating point precision issues
                             freq_str = f
                             found = True
                             break
@@ -184,8 +185,11 @@ def write_c6(c6_dict: dict, labels: list, output_file: str = "c6_tmp.txt") -> No
 
                     freq_formatted = "0.0000000E+00" if freq == 0.0 else f"{freq:.7E}"
 
-                    header = f"POL  SITE-LABELS  {site1}  {site2}  SITE-INDICES     {idx1}     {idx2}  RANK  0 :   1   BY     0 :   1   FREQ2  {freq_formatted}  CARTSPHER S"
-                    file.write(header + "\n")
+                    orient_header = (
+                        f"POL  SITE-LABELS  {site1}  {site2}  SITE-INDICES     {idx1}     {idx2}  "
+                        f"RANK  0 :   1   BY     0 :   1   FREQ2  {freq_formatted}  CARTSPHER S"
+                    )
+                    file.write(orient_header + "\n")
 
                     for i in range(4):
                         row = ""
@@ -203,7 +207,16 @@ def write_c6(c6_dict: dict, labels: list, output_file: str = "c6_tmp.txt") -> No
 class NumpyEncoder(json.JSONEncoder):
     """Custom JSON encoder for numpy data types."""
 
-    def default(self, obj):
+    def default(self, obj: object) -> object:
+        """Convert numpy data types to standard Python types.
+
+        Args:
+            obj (object): Object to be converted
+
+        Returns:
+            object: Converted object
+
+        """
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         if isinstance(obj, np.integer):
