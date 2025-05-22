@@ -91,8 +91,10 @@ def get_file_names(args: argparse.Namespace) -> tuple[str, str]:
     """
     if not args.output:
         path = Path(args.input_file)
-        if args.parse or args.all or args.c6:
+        if args.parse or args.all:
             args.output = path.with_suffix(".json")
+        elif args.c6:
+            args.output = path.with_suffix(".orient.txt")
         elif args.alpha:
             args.output = path.with_suffix(".alpha.json")
 

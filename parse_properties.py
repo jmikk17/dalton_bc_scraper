@@ -1,17 +1,33 @@
 import re
+import sys
 
 import numpy as np
 import pandas as pd
+from scipy.interpolate import pade
 
 import auxil
 
 # C6 xyz labels following the Orient format
-C6_XYZ = {
+XYZ_TO_SPHERICAL = {
     "00": 0,  # 00
     "0z": 1,  # 10
     "0x": 2,  # 11c
     "0y": 3,  # 11s
 }
+
+FREQ_SQ_LIST = [
+    0.0000000e00,
+    -4.3700000e-05,
+    -1.3086000e-03,
+    -9.1102000e-03,
+    -3.9063200e-02,
+    -1.3720890e-01,
+    -4.5550980e-01,
+    -1.5999700e00,
+    -6.8604430e00,
+    -4.7760340e01,
+    -1.4306370e03,
+]
 
 
 def extract_2nd_order_prop(content: str, wave_function: str, atomic_moment_order: int) -> dict:
@@ -155,15 +171,16 @@ def read_2nd_order_prop(content: dict) -> pd.DataFrame:
     return pd.DataFrame(parsed_data)
 
 
-def extract_c6(content: str) -> dict:
-    """Extract C6 coefficients from the Dalton output.
+def extract_imaginary(content: str) -> dict:
+    """Extract alpha(i omega) from the Dalton output.
 
     Args:
         content (str): Content of the Dalton output file
         n_freq (int): Number of frequencies to extract
 
     Returns:
-        dict: Dictionary of alpha(iomega) values
+        dict: Dictionary of alpha(i omega) values. Outer keys are the labels of the atom pairs, inner keys are the
+              frequencies, and values are the corresponding alpha(i omega) values.
 
     Todo:
         - Logic for parsing needs to be double checked.
@@ -171,9 +188,11 @@ def extract_c6(content: str) -> dict:
     """
     results = {}
 
-    c6_pattern = r"(AM\w+)\s+(AM\w+)\s+([-]?\d+\.\d+)\n\s+GRIDSQ\s+ALPHA\n((?:\s+[-]?\d+\.\d+\s+[-]?\d+\.\d+\n){11})"
+    imaginary_pattern = (
+        r"(AM\w+)\s+(AM\w+)\s+([-]?\d+\.\d+)\n\s+GRIDSQ\s+ALPHA\n((?:\s+[-]?\d+\.\d+\s+[-]?\d+\.\d+\n){11})"
+    )
 
-    for match in re.finditer(c6_pattern, content):
+    for match in re.finditer(imaginary_pattern, content):
         operator1 = match.group(1)
         operator2 = match.group(2)
 
@@ -196,8 +215,8 @@ def extract_c6(content: str) -> dict:
             key = key1
             results[key1] = {}
 
-        xyz_idx1 = C6_XYZ.get(xyz_comp1, 0)
-        xyz_idx2 = C6_XYZ.get(xyz_comp2, 0)
+        xyz_idx1 = XYZ_TO_SPHERICAL.get(xyz_comp1, 0)
+        xyz_idx2 = XYZ_TO_SPHERICAL.get(xyz_comp2, 0)
 
         data_lines = data_block.strip().split("\n")
         for line in data_lines:
@@ -216,3 +235,70 @@ def extract_c6(content: str) -> dict:
                     results[key][str(gridsq)][xyz_idx2, xyz_idx1] = alpha
 
     return results
+
+
+def pade_approx(content: str) -> dict:
+    """Extract Cauchy moments from the Dalton output, calculate alpha(i omega) using Pade approximations."""
+    results = {}
+
+    block_pattern = (
+        r"\s*(AM\d+)\s+(AM\d+)\s+(-?\d+)\s+([-\d.Ee+]+)\s*\n"
+        r"((?:\s+-?\d+\s+[-\d.Ee+]+\s*\n)+)"
+    )
+
+    for match in re.finditer(block_pattern, content):
+        # The first line contains both labels and values, the rest is only data for Cauchy number n and value D_AB
+        # Assumes coefficients starts from D(-4)=S(+2), and we need to start from D(0)=S(-2), D(n) = S(-n-2)
+        operator1 = match.group(1)
+        operator2 = match.group(2)
+        _ = int(match.group(3))
+        _ = float(match.group(4))
+        data_block = match.group(5)
+
+        n_list = []
+        d_ab_list = []
+        first = True
+
+        for line in data_block.strip().splitlines():
+            if first:
+                first = False
+                continue
+            n, d_ab = line.split()
+            n_list.append(int(n))
+            d_ab_list.append(float(d_ab))
+
+        # print(f"n_list: {n_list}")
+        # print(f"d_ab_list: {d_ab_list}")
+
+        k = 2
+
+        if len(n_list) < (k * 2 + 1):
+            sys.exit(f"Not enough moments for Pade, need {k * 2 + 1} moments, got {len(n_list)}")
+        p_low, q_low = pade(d_ab_list, n=k, m=k - 1)
+        p_high, q_high = pade(d_ab_list, n=k, m=k)
+
+        print("Operator 1:", operator1, "Operator 2:", operator2)
+        for i in range(10):
+            z_value = FREQ_SQ_LIST[i]
+
+            pade_result_low = p_low(z_value) / q_low(z_value)
+            pade_result_high = p_high(z_value) / q_high(z_value)
+
+            normal_expansion = (
+                d_ab_list[0] * z_value**0
+                + d_ab_list[1] * z_value**1
+                + d_ab_list[2] * z_value**2
+                + d_ab_list[3] * z_value**3
+                + d_ab_list[4] * z_value**4
+            )
+            print(
+                "Omega sq:",
+                FREQ_SQ_LIST[i],
+                "Normal power series:",
+                normal_expansion,
+                "Pade approximation:",
+                pade_result_low,
+                pade_result_high,
+            )
+
+    sys.exit("Pade approximation not implemented yet")

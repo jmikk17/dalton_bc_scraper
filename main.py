@@ -70,20 +70,29 @@ def alpha_analysis(content: dict) -> dict:
     return alpha.alpha_calc(property_df, geometry, atmmom)
 
 
-def parse_c6_data(content: str) -> dict:
-    """Extract C6 data from Dalton output file.
+def parse_imaginary_data(content: str, output_file: str) -> dict:
+    """Extract alpha(i omega) data from Dalton output file, and write as orient fmtB polarizability file.
 
     Args:
         content (str): Content of Dalton output file
+        output_file (str): Output file name
 
     """
-    c6_dict = parse_properties.extract_c6(content)
-    if not c6_dict:
+    imaginary_dict = {}
+    wave_function = parse_calculation.extract_wave_function_type(content)
+    if not wave_function:
+        sys.exit("Error: No wave function type found")
+    if wave_function["wave_function"] != "CC":
+        # This requires a min print level of 5 in the Dalton input file
+        imaginary_dict = parse_properties.extract_imaginary(content)
+    elif wave_function["wave_function"] == "CC":
+        imaginary_dict = parse_properties.pade_approx(content)
+    if not imaginary_dict:
         sys.exit("Error: No C6 data found")
 
-    labels = parse_coords.extract_coordinates(content, c6_label=True)
+    labels = parse_coords.extract_coordinates(content, label_only=True)
 
-    auxil.write_c6(c6_dict, labels)
+    auxil.write_c6(imaginary_dict, labels, output_file)
 
 
 def main() -> None:
@@ -109,7 +118,7 @@ def main() -> None:
         result = alpha_analysis(content)
     elif args.c6:
         content = auxil.read_file(input_file, ".out")
-        result = parse_c6_data(content)
+        result = parse_imaginary_data(content, output_file)
 
     if not args.c6:
         auxil.write_file(output_file, result)
