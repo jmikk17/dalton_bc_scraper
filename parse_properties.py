@@ -242,7 +242,7 @@ def pade_approx(content: str) -> dict:
     results = {}
 
     block_pattern = (
-        r"\s*(AM\d+)\s+(AM\d+)\s+(-?\d+)\s+([-\d.Ee+]+)\s*\n"
+        r"\s*(AM\w+)\s+(AM\w+)\s+(-?\d+)\s+([-\d.Ee+]+)\s*\n"
         r"((?:\s+-?\d+\s+[-\d.Ee+]+\s*\n)+)"
     )
 
@@ -267,17 +267,17 @@ def pade_approx(content: str) -> dict:
             n_list.append(int(n))
             d_ab_list.append(float(d_ab))
 
-        # print(f"n_list: {n_list}")
-        # print(f"d_ab_list: {d_ab_list}")
+        print("Operator 1:", operator1, "Operator 2:", operator2)
+        print(f"n_list: {n_list}")
+        print(f"d_ab_list: {d_ab_list}")
 
-        k = 2
+        k = 10
 
         if len(n_list) < (k * 2 + 1):
             sys.exit(f"Not enough moments for Pade, need {k * 2 + 1} moments, got {len(n_list)}")
-        p_low, q_low = pade(d_ab_list, n=k, m=k - 1)
+        p_low, q_low = pade(d_ab_list, n=k, m=(k - 1))
         p_high, q_high = pade(d_ab_list, n=k, m=k)
 
-        print("Operator 1:", operator1, "Operator 2:", operator2)
         for i in range(10):
             z_value = FREQ_SQ_LIST[i]
 
