@@ -14,7 +14,7 @@ This tool parses Dalton output files to extract various properties including:
 ## Installation
 Requires NumPy and Pandas.
 ```bash
-git clone https://github.com/yourusername/dalton-output-parser.git
+git clone https://github.com/jmikk17/dalton_bc_scraper.git
 ```
 
 ## Usage

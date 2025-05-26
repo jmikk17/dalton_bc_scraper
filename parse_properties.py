@@ -271,18 +271,21 @@ def pade_approx(content: str) -> dict:
         print(f"n_list: {n_list}")
         print(f"d_ab_list: {d_ab_list}")
 
-        k = 10
+        k = 4
+
+        scale = max(abs(x) for x in d_ab_list) or 1.0
+        d_ab_scaled = [x / scale for x in d_ab_list]
 
         if len(n_list) < (k * 2 + 1):
             sys.exit(f"Not enough moments for Pade, need {k * 2 + 1} moments, got {len(n_list)}")
-        p_low, q_low = pade(d_ab_list, n=k, m=(k - 1))
-        p_high, q_high = pade(d_ab_list, n=k, m=k)
+        p_low, q_low = pade(d_ab_scaled, n=k, m=(k - 1))
+        p_high, q_high = pade(d_ab_scaled, n=k, m=k)
 
         for i in range(10):
             z_value = FREQ_SQ_LIST[i]
 
-            pade_result_low = p_low(z_value) / q_low(z_value)
-            pade_result_high = p_high(z_value) / q_high(z_value)
+            pade_result_low = scale * p_low(z_value) / q_low(z_value)
+            pade_result_high = scale * p_high(z_value) / q_high(z_value)
 
             normal_expansion = (
                 d_ab_list[0] * z_value**0
