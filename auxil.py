@@ -182,26 +182,39 @@ def write_c6(c6_dict: dict, labels: list, output_file: str = "c6_tmp.txt") -> No
                             found = True
                             break
 
+                rank = 1
+
                 if found:
                     matrix = freq_data[freq_str]
 
                     freq_formatted = "0.0000000E+00" if freq == 0.0 else f"{freq:.7E}"
 
-                    orient_header = (
-                        f"POL  SITE-LABELS  {site1}  {site2}  SITE-INDICES     {idx1}     {idx2}  "
-                        f"RANK  0 :   1   BY     0 :   1   FREQ2  {freq_formatted}  CARTSPHER S"
-                    )
-                    file.write(orient_header + "\n")
+                    if rank == 1:
+                        orient_header = (
+                            f"POL  SITE-LABELS  {site1}  {site2}  SITE-INDICES     {idx1}     {idx2}  "
+                            f"RANK  0 :   1   BY     0 :   1   FREQ2  {freq_formatted}  CARTSPHER S"
+                        )
+                        file.write(orient_header + "\n")
 
-                    for i in range(4):
-                        row = ""
-                        for j in range(4):
-                            value_str = f"{matrix[i, j]:.7E}"
-                            row += value_str + "   "
+                        for i in range(4):
+                            row = ""
+                            for j in range(4):
+                                value_str = f"{matrix[i, j]:.7E}"
+                                row += value_str + "   "
 
-                        file.write(f"{row}\n")
+                            file.write(f"{row}\n")
 
-                    file.write("END\n")
+                        file.write("END\n")
+                    elif rank == 0:
+                        orient_header = (
+                            f"POL  SITE-LABELS  {site1}  {site2}  SITE-INDICES     {idx1}     {idx2}  "
+                            f"RANK  0 :   0   BY     0 :   0   FREQ2  {freq_formatted}  CARTSPHER S"
+                        )
+
+                        file.write(orient_header + "\n")
+                        file.write(f"{matrix[0, 0]:.7E}\n")
+                        file.write("END\n")
+
                 else:
                     sys.exit(f"Error: Frequency {freq} not found in C6 data for {site1} and {site2}")
 
